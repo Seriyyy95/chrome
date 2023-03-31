@@ -31,6 +31,13 @@ interface SocketInterface
     public function receiveData(): array;
 
     /**
+     * Reads all available data from the socket or returns an empty array
+     *
+     * @return array
+     */
+    public function readData(): array;
+
+    /**
      * Connect to the server.
      *
      * @return bool Whether a new connection was made

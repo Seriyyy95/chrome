@@ -83,6 +83,17 @@ class MockSocket implements SocketInterface
     }
 
     /**
+     * {@inheritdoc}
+     */
+    public function readData(): array
+    {
+        $data = $this->receivedData;
+        $this->receivedData = [];
+
+        return $data;
+    }
+
+    /**
      * Add data to be returned with receiveData.
      *
      * @param bool $forNextMessage true to set the response id automatically

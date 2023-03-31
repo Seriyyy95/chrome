@@ -173,4 +173,35 @@ class DomTest extends BaseTestCase
         self::assertStringEndsWith(\basename($files[0]), $value1);
         self::assertStringEndsWith(\basename($files[1]), $value2);
     }
+
+    public function testDomDoesReturnsTheSameObject(): void
+    {
+        $page = $this->openSitePage('domForm.html');
+
+        $firstDom = $page->dom();
+
+        $element = $firstDom->querySelector('#myinput');
+
+        $secondDom = $page->dom();
+
+        $element->focus();
+
+        $this->assertEquals($firstDom, $secondDom);
+    }
+
+    public function testRootNodeIdIsUpdatedOnReload(): void
+    {
+        $page = $this->openSitePage('domForm.html');
+
+        $dom = $page->dom();
+
+        $nodeId = $dom->getNodeId();
+
+        $reloadBtn = $dom->querySelector('#reload-btn');
+        $reloadBtn->click();
+
+        $page->waitForReload();
+
+        $this->assertNotEquals($nodeId, $page->dom()->getNodeId());
+    }
 }

@@ -305,10 +305,29 @@ class Connection extends EventEmitter implements LoggerAwareInterface
 
     /**
      * Receive and stack data from the socket.
+     *
+     * @param bool $blocking
      */
-    private function receiveData(): void
+    private function receiveData(bool $blocking = true): void
     {
-        $this->receivedData = \array_merge($this->receivedData, $this->wsClient->receiveData());
+        if ($blocking) {
+            $this->receivedData = \array_merge($this->receivedData, $this->wsClient->receiveData());
+        } else {
+            $this->receivedData = \array_merge($this->receivedData, $this->wsClient->readData());
+        }
+    }
+
+    public function processAllEvents(): void
+    {
+        $this->receiveData(false);
+
+        do {
+            // dispatch first line of buffer
+            $datum = \array_shift($this->receivedData);
+            if ($datum) {
+                $this->dispatchMessage($datum);
+            }
+        } while (count($this->receivedData) > 0);
     }
 
     /**

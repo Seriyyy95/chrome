@@ -11,12 +11,22 @@ class Dom extends Node
 {
     public function __construct(Page $page)
     {
+        $rootNodeId = $this->getRootNodeId($page);
+
+        parent::__construct($page, $rootNodeId, true);
+
+        $page->getSession()->on('method:DOM.documentUpdated', function (...$event) {
+            $this->nodeId = $this->getRootNodeId($this->page);
+        });
+    }
+
+    private function getRootNodeId(Page $page): ?int
+    {
         $message = new Message('DOM.getDocument');
-        $response = $page->getSession()->sendMessageSync($message);
+        $stream = $page->getSession()->sendMessage($message);
+        $response = $stream->waitForResponse(1000);
 
-        $rootNodeId = $response->getResultData('root')['nodeId'];
-
-        parent::__construct($page, $rootNodeId);
+        return $response->getResultData('root')['nodeId'];
     }
 
     /**
@@ -24,6 +34,8 @@ class Dom extends Node
      */
     public function search(string $selector): array
     {
+        $this->prepareForRequest();
+
         $message = new Message('DOM.performSearch', [
             'query' => $selector,
         ]);

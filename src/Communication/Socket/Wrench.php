@@ -91,6 +91,29 @@ class Wrench implements SocketInterface, LoggerAwareInterface
     /**
      * {@inheritdoc}
      */
+    public function readData(): array
+    {
+        $playloads = $this->client->read();
+
+        $data = [];
+
+        if ($playloads) {
+            foreach ($playloads as $playload) {
+                /** @var Payload */
+                $dataString = $playload->getPayload();
+                $data[] = $dataString;
+
+                // log
+                $this->logger->debug('socket(' . $this->socketId . '): ← receiving data:' . $dataString);
+            }
+        }
+
+        return $data;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function connect()
     {
         // log

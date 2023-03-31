@@ -21,17 +21,36 @@ class Node
      */
     protected $nodeId;
 
-    public function __construct(Page $page, int $nodeId)
+    /**
+     * @var bool
+     */
+    protected $isStale = false;
+
+    public function __construct(Page $page, int $nodeId, bool $isRoot = false)
     {
         $this->page = $page;
         $this->nodeId = $nodeId;
+
+        $page->getSession()->on('method:DOM.documentUpdated', function (...$event) use ($isRoot) {
+            if ($isRoot === false) {
+                $this->isStale = true;
+            }
+        });
+    }
+
+    public function getNodeId(): int
+    {
+        return $this->nodeId;
     }
 
     public function getAttributes(): NodeAttributes
     {
+        $this->prepareForRequest();
+
         $message = new Message('DOM.getAttributes', [
             'nodeId' => $this->nodeId,
         ]);
+
         $response = $this->page->getSession()->sendMessageSync($message);
 
         $this->assertNotError($response);
@@ -43,11 +62,14 @@ class Node
 
     public function setAttributeValue(string $name, string $value): void
     {
+        $this->prepareForRequest();
+
         $message = new Message('DOM.setAttributeValue', [
             'nodeId' => $this->nodeId,
             'name' => $name,
             'value' => $value,
         ]);
+
         $response = $this->page->getSession()->sendMessageSync($message);
 
         $this->assertNotError($response);
@@ -55,10 +77,13 @@ class Node
 
     public function querySelector(string $selector): ?self
     {
+        $this->prepareForRequest();
+
         $message = new Message('DOM.querySelector', [
             'nodeId' => $this->nodeId,
             'selector' => $selector,
         ]);
+
         $response = $this->page->getSession()->sendMessageSync($message);
         $this->assertNotError($response);
 
@@ -73,10 +98,13 @@ class Node
 
     public function querySelectorAll(string $selector): array
     {
+        $this->prepareForRequest();
+
         $message = new Message('DOM.querySelectorAll', [
             'nodeId' => $this->nodeId,
             'selector' => $selector,
         ]);
+
         $response = $this->page->getSession()->sendMessageSync($message);
 
         $this->assertNotError($response);
@@ -92,6 +120,8 @@ class Node
 
     public function focus(): void
     {
+        $this->prepareForRequest();
+
         $message = new Message('DOM.focus', [
             'nodeId' => $this->nodeId,
         ]);
@@ -107,6 +137,8 @@ class Node
 
     public function getPosition(): ?NodePosition
     {
+        $this->prepareForRequest();
+
         $message = new Message('DOM.getBoxModel', [
             'nodeId' => $this->nodeId,
         ]);
@@ -130,6 +162,8 @@ class Node
 
     public function getHTML(): string
     {
+        $this->prepareForRequest();
+
         $message = new Message('DOM.getOuterHTML', [
             'nodeId' => $this->nodeId,
         ]);
@@ -147,6 +181,8 @@ class Node
 
     public function scrollIntoView(): void
     {
+        $this->prepareForRequest();
+
         $message = new Message('DOM.scrollIntoViewIfNeeded', [
             'nodeId' => $this->nodeId,
         ]);
@@ -160,6 +196,8 @@ class Node
      */
     public function click(): void
     {
+        $this->prepareForRequest();
+
         if (false === $this->hasPosition()) {
             throw new DomException('Failed to click element without position');
         }
@@ -172,6 +210,8 @@ class Node
 
     public function sendKeys(string $text): void
     {
+        $this->prepareForRequest();
+
         $this->scrollIntoView();
         $this->focus();
         $this->page->keyboard()
@@ -185,6 +225,8 @@ class Node
 
     public function sendFiles(array $filePaths): void
     {
+        $this->prepareForRequest();
+
         $message = new Message('DOM.setFileInputFiles', [
             'files' => $filePaths,
             'nodeId' => $this->nodeId,
@@ -202,5 +244,16 @@ class Node
         if (!$response->isSuccessful()) {
             throw new DOMException($response->getErrorMessage());
         }
+    }
+
+    protected function prepareForRequest(): void
+    {
+        if ($this->isStale) {
+            throw new StaleElementException();
+        }
+
+        $this->page->assertNotClosed();
+
+        $this->page->getSession()->getConnection()->processAllEvents();
     }
 }
