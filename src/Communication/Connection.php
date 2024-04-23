@@ -346,6 +346,15 @@ class Connection extends EventEmitter implements LoggerAwareInterface
         return false;
     }
 
+    public function processAllEvents(): void
+    {
+        $hasData = $this->wsClient->waitForData(0);
+
+        if ($hasData) {
+            $this->receiveData();
+        }
+    }
+
     /**
      * Dispatches the message and either stores the response or emits an event.
      *

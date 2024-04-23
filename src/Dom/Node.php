@@ -7,6 +7,7 @@ namespace HeadlessChromium\Dom;
 use HeadlessChromium\Communication\Message;
 use HeadlessChromium\Communication\Response;
 use HeadlessChromium\Exception\DomException;
+use HeadlessChromium\Exception\StaleElementException;
 use HeadlessChromium\Page;
 
 class Node
@@ -21,16 +22,37 @@ class Node
      */
     protected $nodeId;
 
+    /**
+     * @var bool
+     */
+    protected bool $isStale = false;
+
     public function __construct(Page $page, int $nodeId)
     {
         $this->page = $page;
         $this->nodeId = $nodeId;
+
+        $page->getSession()->on('method:DOM.documentUpdated', function (...$event) {
+            $this->isStale = true;
+        });
+    }
+
+    public function getNodeId(): int
+    {
+       return $this->nodeId;
+    }
+
+    public function getNodeIdForRequest(): int
+    {
+        $this->prepareForRequest();
+
+        return $this->getNodeId();
     }
 
     public function getAttributes(): NodeAttributes
     {
         $message = new Message('DOM.getAttributes', [
-            'nodeId' => $this->nodeId,
+            'nodeId' => $this->getNodeIdForRequest(),
         ]);
         $response = $this->page->getSession()->sendMessageSync($message);
 
@@ -44,7 +66,7 @@ class Node
     public function setAttributeValue(string $name, string $value): void
     {
         $message = new Message('DOM.setAttributeValue', [
-            'nodeId' => $this->nodeId,
+            'nodeId' => $this->getNodeIdForRequest(),
             'name' => $name,
             'value' => $value,
         ]);
@@ -56,7 +78,7 @@ class Node
     public function querySelector(string $selector): ?self
     {
         $message = new Message('DOM.querySelector', [
-            'nodeId' => $this->nodeId,
+            'nodeId' => $this->getNodeIdForRequest(),
             'selector' => $selector,
         ]);
         $response = $this->page->getSession()->sendMessageSync($message);
@@ -74,7 +96,7 @@ class Node
     public function querySelectorAll(string $selector): array
     {
         $message = new Message('DOM.querySelectorAll', [
-            'nodeId' => $this->nodeId,
+            'nodeId' => $this->getNodeIdForRequest(),
             'selector' => $selector,
         ]);
         $response = $this->page->getSession()->sendMessageSync($message);
@@ -93,7 +115,7 @@ class Node
     public function focus(): void
     {
         $message = new Message('DOM.focus', [
-            'nodeId' => $this->nodeId,
+            'nodeId' => $this->getNodeIdForRequest(),
         ]);
         $response = $this->page->getSession()->sendMessageSync($message);
 
@@ -108,7 +130,7 @@ class Node
     public function getPosition(): ?NodePosition
     {
         $message = new Message('DOM.getBoxModel', [
-            'nodeId' => $this->nodeId,
+            'nodeId' => $this->getNodeIdForRequest(),
         ]);
         $response = $this->page->getSession()->sendMessageSync($message);
 
@@ -131,7 +153,7 @@ class Node
     public function getHTML(): string
     {
         $message = new Message('DOM.getOuterHTML', [
-            'nodeId' => $this->nodeId,
+            'nodeId' => $this->getNodeIdForRequest(),
         ]);
         $response = $this->page->getSession()->sendMessageSync($message);
 
@@ -143,7 +165,7 @@ class Node
     public function setHTML(string $outerHTML): void
     {
         $message = new Message('DOM.setOuterHTML', [
-            'nodeId' => $this->nodeId,
+            'nodeId' => $this->getNodeIdForRequest(),
             'outerHTML' => $outerHTML,
         ]);
         $response = $this->page->getSession()->sendMessageSync($message);
@@ -159,7 +181,7 @@ class Node
     public function scrollIntoView(): void
     {
         $message = new Message('DOM.scrollIntoViewIfNeeded', [
-            'nodeId' => $this->nodeId,
+            'nodeId' => $this->getNodeIdForRequest(),
         ]);
         $response = $this->page->getSession()->sendMessageSync($message);
 
@@ -198,7 +220,7 @@ class Node
     {
         $message = new Message('DOM.setFileInputFiles', [
             'files' => $filePaths,
-            'nodeId' => $this->nodeId,
+            'nodeId' => $this->getNodeIdForRequest(),
         ]);
         $response = $this->page->getSession()->sendMessageSync($message);
 
@@ -212,6 +234,17 @@ class Node
     {
         if (!$response->isSuccessful()) {
             throw new DOMException($response->getErrorMessage());
+        }
+    }
+
+    protected function prepareForRequest()
+    {
+        $this->page->assertNotClosed();
+
+        $this->page->getSession()->getConnection()->processAllEvents();
+
+        if ($this->isStale) {
+            throw new StaleElementException();
         }
     }
 }

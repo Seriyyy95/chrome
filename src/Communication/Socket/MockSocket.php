@@ -124,4 +124,11 @@ class MockSocket implements SocketInterface
 
         return true;
     }
+
+    public function waitForData(float $maxSeconds): bool
+    {
+        // TODO: Implement wait if needed.
+
+        return !empty($this->receivedData);
+    }
 }

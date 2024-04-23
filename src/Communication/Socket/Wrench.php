@@ -137,4 +137,9 @@ class Wrench implements SocketInterface, LoggerAwareInterface
 
         return $disconnected;
     }
+
+    public function waitForData(float $maxSeconds): bool
+    {
+        return $this->client->waitForData($maxSeconds);
+    }
 }

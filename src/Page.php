@@ -69,6 +69,11 @@ class Page
     protected $keyboard;
 
     /**
+     * @var Dom|null
+     */
+    protected $dom = null;
+
+    /**
      * Page constructor.
      *
      * @param Target $target
@@ -807,7 +812,13 @@ class Page
 
     public function dom(): Dom
     {
-        return new Dom($this);
+        $this->assertNotClosed();
+
+        if ($this->dom === null) {
+            $this->dom = new Dom($this);
+        }
+
+        return $this->dom;
     }
 
     /**

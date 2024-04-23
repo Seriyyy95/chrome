@@ -52,4 +52,6 @@ interface SocketInterface
      * @return bool
      */
     public function disconnect($reason = 1000);
+
+    public function waitForData(float $maxSeconds): bool;
 }
