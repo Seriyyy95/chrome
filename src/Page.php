@@ -814,7 +814,7 @@ class Page
     {
         $this->assertNotClosed();
 
-        if ($this->dom === null) {
+        if (null === $this->dom) {
             $this->dom = new Dom($this);
         }
 

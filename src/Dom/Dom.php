@@ -55,7 +55,7 @@ class Dom extends Node
         return $nodes;
     }
 
-    public function prepareForRequest(bool $throw = true)
+    public function prepareForRequest(bool $throw = true): void
     {
         $this->page->assertNotClosed();
 

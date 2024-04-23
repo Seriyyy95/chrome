@@ -32,14 +32,14 @@ class Node
         $this->page = $page;
         $this->nodeId = $nodeId;
 
-        $page->getSession()->on('method:DOM.documentUpdated', function (...$event) {
+        $page->getSession()->on('method:DOM.documentUpdated', function (...$event): void {
             $this->isStale = true;
         });
     }
 
     public function getNodeId(): int
     {
-       return $this->nodeId;
+        return $this->nodeId;
     }
 
     public function getNodeIdForRequest(): int
@@ -237,7 +237,7 @@ class Node
         }
     }
 
-    protected function prepareForRequest()
+    protected function prepareForRequest(): void
     {
         $this->page->assertNotClosed();
 
