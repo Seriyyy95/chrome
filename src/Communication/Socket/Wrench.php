@@ -18,7 +18,7 @@ use Psr\Log\NullLogger;
 use Wrench\Client as WrenchClient;
 use Wrench\Payload\Payload;
 
-class Wrench implements SocketInterface, LoggerAwareInterface
+class Wrench implements SocketInterface, LoggerAwareInterface, WaitForDataInterface
 {
     use LoggerAwareTrait;
 

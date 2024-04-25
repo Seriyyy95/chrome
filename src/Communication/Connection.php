@@ -12,9 +12,11 @@
 namespace HeadlessChromium\Communication;
 
 use Evenement\EventEmitter;
+use HeadlessChromium\Communication\Socket\WaitForDataInterface;
 use HeadlessChromium\Communication\Socket\SocketInterface;
 use HeadlessChromium\Communication\Socket\Wrench;
 use HeadlessChromium\Exception\CommunicationException;
+use HeadlessChromium\Exception\CommunicationException\CantSyncEventsException;
 use HeadlessChromium\Exception\CommunicationException\CannotReadResponse;
 use HeadlessChromium\Exception\CommunicationException\InvalidResponse;
 use HeadlessChromium\Exception\OperationTimedOut;
@@ -348,6 +350,10 @@ class Connection extends EventEmitter implements LoggerAwareInterface
 
     public function processAllEvents(): void
     {
+        if($this->wsClient instanceof WaitForDataInterface === false){
+            throw new CantSyncEventsException();
+        }
+
         $hasData = $this->wsClient->waitForData(0);
 
         if ($hasData) {
