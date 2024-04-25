@@ -6,5 +6,4 @@ use HeadlessChromium\Exception\CommunicationException;
 
 class CantSyncEventsException extends CommunicationException
 {
-
 }
