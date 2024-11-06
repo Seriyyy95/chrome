@@ -44,7 +44,7 @@ class Wrench implements SocketInterface, LoggerAwareInterface, WaitForDataInterf
     /**
      * @param WrenchClient $client
      */
-    public function __construct(WrenchClient $client, LoggerInterface $logger = null)
+    public function __construct(WrenchClient $client, ?LoggerInterface $logger = null)
     {
         $this->client = $client;
 

@@ -17,6 +17,7 @@ use HeadlessChromium\Communication\Target;
 use HeadlessChromium\Cookies\Cookie;
 use HeadlessChromium\Cookies\CookiesCollection;
 use HeadlessChromium\Dom\Dom;
+use HeadlessChromium\Dom\Node;
 use HeadlessChromium\Dom\Selector\CssSelector;
 use HeadlessChromium\Dom\Selector\Selector;
 use HeadlessChromium\Exception\CommunicationException;
@@ -537,7 +538,7 @@ class Page
      *
      * @return Clip
      */
-    public function getFullPageClip(int $timeout = null): Clip
+    public function getFullPageClip(?int $timeout = null): Clip
     {
         $contentSize = $this->getLayoutMetrics()->await($timeout)->getCssContentSize();
 
@@ -686,6 +687,13 @@ class Page
             ->sendMessage(new Message('Page.captureScreenshot', $screenshotOptions));
 
         return new PageScreenshot($responseReader);
+    }
+
+    public function screenshotElement(Node $node): PageScreenshot
+    {
+        return $this->screenshot([
+            'clip' => $node->getClip(),
+        ]);
     }
 
     /**
@@ -1024,7 +1032,7 @@ class Page
      *
      * @return CookiesCollection
      */
-    public function getCookies(int $timeout = null)
+    public function getCookies(?int $timeout = null)
     {
         return $this->readCookies()->await($timeout)->getCookies();
     }
@@ -1044,7 +1052,7 @@ class Page
      *
      * @return CookiesCollection
      */
-    public function getAllCookies(int $timeout = null)
+    public function getAllCookies(?int $timeout = null)
     {
         return $this->readAllCookies()->await($timeout)->getCookies();
     }
